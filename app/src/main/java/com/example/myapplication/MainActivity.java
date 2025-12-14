@@ -8,6 +8,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.myapplication.calendar.CalendarActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         switch (appItem.getType()) {
             case CALENDAR:
                 // 打开日历应用
-                Intent calendarIntent = new Intent(this, com.example.myapplication.calendar.CalendarActivity.class);
+                Intent calendarIntent = new Intent(this, CalendarActivity.class);
                 startActivity(calendarIntent);
                 break;
             case GALLERY:

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardElevation="2dp"
+    app:cardCornerRadius="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- 左侧颜色条 -->
+        <View
+            android:id="@+id/color_bar"
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:background="#2196F3" />
+
+        <!-- 内容区域 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- 时间和类型标签 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_event_time"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="09:00 - 10:30"
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:drawableStart="@android:drawable/ic_menu_recent_history"
+                    android:drawablePadding="4dp" />
+
+                <TextView
+                    android:id="@+id/tv_event_type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="会议"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    android:background="#2196F3"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- 标题 -->
+            <TextView
+                android:id="@+id/tv_event_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="团队周例会"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginTop="4dp" />
+
+            <!-- 描述 -->
+            <TextView
+                android:id="@+id/tv_event_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="讨论本周工作进展和下周计划"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- 地点和时长 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/tv_event_location"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="📍 会议室A"
+                    android:textSize="12sp"
+                    android:textColor="#999999" />
+
+                <TextView
+                    android:id="@+id/tv_event_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="90分钟"
+                    android:textSize="12sp"
+                    android:textColor="#999999"
+                    android:drawableStart="@android:drawable/ic_menu_today"
+                    android:drawablePadding="4dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

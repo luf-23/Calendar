@@ -80,7 +80,16 @@
                 <com.google.android.material.button.MaterialButtonToggleGroup
                     android:id="@+id/toggle_view_mode"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_year_view"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="年" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_month_view"
@@ -88,13 +97,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="月" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_week_view"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="周" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_day_view"
@@ -180,24 +182,21 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 日历网格 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/calendar_recycler_view"
+    <!-- 内容容器 -->
+    <LinearLayout
+        android:id="@+id/calendar_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" />
+        android:orientation="vertical">
 
-    <!-- 添加日程按钮 -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_add_event"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:layout_marginBottom="72dp"
-        android:src="@android:drawable/ic_input_add"
-        android:contentDescription="添加日程"
-        app:tint="@android:color/white" />
+        <!-- 日历网格 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/calendar_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp" />
+
+    </LinearLayout>
 
 </LinearLayout>

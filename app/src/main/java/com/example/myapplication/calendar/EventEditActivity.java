@@ -4,12 +4,9 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.Spinner;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,248 +14,275 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.R;
-import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
+/**
+ * 日程编辑Activity
+ */
 public class EventEditActivity extends AppCompatActivity {
-
+    
+    public static final String EXTRA_EVENT_ID = "event_id";
+    public static final String EXTRA_EVENT_DATE = "event_date";
+    public static final int RESULT_DELETED = 2;
+    
     private TextInputEditText etTitle, etLocation, etDescription;
-    private TextView tvStartTime, tvEndTime;
-    private SwitchMaterial switchReminder;
-    private Spinner spinnerReminder;
-    private RadioGroup rgPriority;
+    private TextView tvTitleBar, tvDate, tvStartTime, tvEndTime;
+    private LinearLayout layoutDate, layoutStartTime, layoutEndTime;
+    private ChipGroup chipGroupType;
     private Button btnDelete;
-    private MaterialCardView cardReminderTime;
     private ImageButton btnCancel, btnSave;
-
-    private Calendar startCalendar, endCalendar;
+    
+    private EventManager eventManager;
     private CalendarEvent currentEvent;
-    private EventDatabase eventDatabase;
     private boolean isEditMode = false;
-
+    
+    private Calendar eventDate;
+    private Calendar startTime;
+    private Calendar endTime;
+    
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINA);
+    private SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.CHINA);
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_edit);
-
+        
         initViews();
-        initDatabase();
         initData();
         setupListeners();
     }
-
+    
     private void initViews() {
+        tvTitleBar = findViewById(R.id.tv_title);
         etTitle = findViewById(R.id.et_event_title);
         etLocation = findViewById(R.id.et_location);
         etDescription = findViewById(R.id.et_description);
+        
+        tvDate = findViewById(R.id.tv_date);
         tvStartTime = findViewById(R.id.tv_start_time);
         tvEndTime = findViewById(R.id.tv_end_time);
-        switchReminder = findViewById(R.id.switch_reminder);
-        spinnerReminder = findViewById(R.id.spinner_reminder);
-        rgPriority = findViewById(R.id.rg_priority);
+        
+        layoutDate = findViewById(R.id.layout_date);
+        layoutStartTime = findViewById(R.id.layout_start_time);
+        layoutEndTime = findViewById(R.id.layout_end_time);
+        
+        chipGroupType = findViewById(R.id.chip_group_type);
         btnDelete = findViewById(R.id.btn_delete);
-        cardReminderTime = findViewById(R.id.card_reminder_time);
         btnCancel = findViewById(R.id.btn_cancel);
         btnSave = findViewById(R.id.btn_save);
-
-        // 设置提醒时间选项
-        String[] reminderOptions = {"提前5分钟", "提前15分钟", "提前30分钟", 
-                                    "提前1小时", "提前1天"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, reminderOptions);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerReminder.setAdapter(adapter);
-        spinnerReminder.setSelection(1); // 默认15分钟
     }
-
-    private void initDatabase() {
-        eventDatabase = new EventDatabase(this);
-    }
-
+    
     private void initData() {
+        eventManager = new EventManager(this);
+        
         // 初始化时间
-        startCalendar = Calendar.getInstance();
-        endCalendar = Calendar.getInstance();
-        endCalendar.add(Calendar.HOUR_OF_DAY, 1);
-
+        eventDate = Calendar.getInstance();
+        startTime = Calendar.getInstance();
+        endTime = Calendar.getInstance();
+        
         // 检查是否是编辑模式
-        long eventId = getIntent().getLongExtra("event_id", -1);
-        if (eventId != -1) {
+        String eventId = getIntent().getStringExtra(EXTRA_EVENT_ID);
+        long dateMillis = getIntent().getLongExtra(EXTRA_EVENT_DATE, System.currentTimeMillis());
+        
+        if (eventId != null) {
+            // 编辑模式
             isEditMode = true;
-            currentEvent = eventDatabase.getEventById(eventId);
-            loadEventData();
+            tvTitleBar.setText("编辑日程");
             btnDelete.setVisibility(View.VISIBLE);
+            
+            currentEvent = eventManager.getEvent(eventId);
+            if (currentEvent != null) {
+                loadEventData();
+            }
         } else {
             // 新建模式
-            long selectedDate = getIntent().getLongExtra("selected_date", -1);
-            if (selectedDate != -1) {
-                startCalendar.setTimeInMillis(selectedDate);
-                startCalendar.set(Calendar.HOUR_OF_DAY, 9);
-                startCalendar.set(Calendar.MINUTE, 0);
-                
-                endCalendar.setTimeInMillis(selectedDate);
-                endCalendar.set(Calendar.HOUR_OF_DAY, 10);
-                endCalendar.set(Calendar.MINUTE, 0);
-            }
-            updateTimeDisplay();
+            isEditMode = false;
+            tvTitleBar.setText("添加日程");
+            btnDelete.setVisibility(View.GONE);
+            
+            // 设置默认日期
+            eventDate.setTimeInMillis(dateMillis);
+            
+            // 设置默认时间（下一个整点）
+            startTime.setTimeInMillis(dateMillis);
+            startTime.set(Calendar.MINUTE, 0);
+            startTime.set(Calendar.SECOND, 0);
+            startTime.add(Calendar.HOUR_OF_DAY, 1);
+            
+            endTime.setTimeInMillis(startTime.getTimeInMillis());
+            endTime.add(Calendar.HOUR_OF_DAY, 1);
+            
+            updateDateTimeDisplay();
         }
     }
-
+    
     private void loadEventData() {
-        if (currentEvent == null) return;
-
         etTitle.setText(currentEvent.getTitle());
         etLocation.setText(currentEvent.getLocation());
         etDescription.setText(currentEvent.getDescription());
-
-        startCalendar.setTime(currentEvent.getStartTime());
-        endCalendar.setTime(currentEvent.getEndTime());
-        updateTimeDisplay();
-
-        switchReminder.setChecked(currentEvent.isHasReminder());
-        cardReminderTime.setVisibility(currentEvent.isHasReminder() ? View.VISIBLE : View.GONE);
-
-        // 设置提醒时间
-        int reminderMinutes = currentEvent.getReminderMinutes();
-        int position = 1; // 默认15分钟
-        if (reminderMinutes == 5) position = 0;
-        else if (reminderMinutes == 15) position = 1;
-        else if (reminderMinutes == 30) position = 2;
-        else if (reminderMinutes == 60) position = 3;
-        else if (reminderMinutes == 1440) position = 4;
-        spinnerReminder.setSelection(position);
-
-        // 设置优先级
-        int priority = currentEvent.getPriority();
-        if (priority == 1) {
-            ((RadioButton) findViewById(R.id.rb_low)).setChecked(true);
-        } else if (priority == 2) {
-            ((RadioButton) findViewById(R.id.rb_medium)).setChecked(true);
-        } else {
-            ((RadioButton) findViewById(R.id.rb_high)).setChecked(true);
+        
+        eventDate.setTime(currentEvent.getStartTime());
+        startTime.setTime(currentEvent.getStartTime());
+        endTime.setTime(currentEvent.getEndTime());
+        
+        // 设置事件类型
+        switch (currentEvent.getType()) {
+            case MEETING:
+                chipGroupType.check(R.id.chip_meeting);
+                break;
+            case WORK:
+                chipGroupType.check(R.id.chip_work);
+                break;
+            case PERSONAL:
+                chipGroupType.check(R.id.chip_personal);
+                break;
+            case IMPORTANT:
+                chipGroupType.check(R.id.chip_important);
+                break;
+            case OTHER:
+                chipGroupType.check(R.id.chip_other);
+                break;
         }
+        
+        updateDateTimeDisplay();
     }
-
+    
     private void setupListeners() {
         btnCancel.setOnClickListener(v -> finish());
-
+        
         btnSave.setOnClickListener(v -> saveEvent());
-
-        findViewById(R.id.layout_start_time).setOnClickListener(v -> showDateTimePicker(true));
-
-        findViewById(R.id.layout_end_time).setOnClickListener(v -> showDateTimePicker(false));
-
-        switchReminder.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            cardReminderTime.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-        });
-
+        
         btnDelete.setOnClickListener(v -> showDeleteConfirmDialog());
+        
+        layoutDate.setOnClickListener(v -> showDatePicker());
+        
+        layoutStartTime.setOnClickListener(v -> showTimePicker(true));
+        
+        layoutEndTime.setOnClickListener(v -> showTimePicker(false));
     }
-
-    private void showDateTimePicker(boolean isStartTime) {
-        Calendar calendar = isStartTime ? startCalendar : endCalendar;
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
+    
+    private void showDatePicker() {
+        DatePickerDialog dialog = new DatePickerDialog(
                 this,
                 (view, year, month, dayOfMonth) -> {
-                    calendar.set(Calendar.YEAR, year);
-                    calendar.set(Calendar.MONTH, month);
-                    calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-                    // 选完日期后选择时间
-                    TimePickerDialog timePickerDialog = new TimePickerDialog(
-                            this,
-                            (timeView, hourOfDay, minute) -> {
-                                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                                calendar.set(Calendar.MINUTE, minute);
-                                updateTimeDisplay();
-                            },
-                            calendar.get(Calendar.HOUR_OF_DAY),
-                            calendar.get(Calendar.MINUTE),
-                            true
-                    );
-                    timePickerDialog.show();
+                    eventDate.set(year, month, dayOfMonth);
+                    // 同步更新开始和结束时间的日期部分
+                    startTime.set(year, month, dayOfMonth);
+                    endTime.set(year, month, dayOfMonth);
+                    updateDateTimeDisplay();
                 },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
+                eventDate.get(Calendar.YEAR),
+                eventDate.get(Calendar.MONTH),
+                eventDate.get(Calendar.DAY_OF_MONTH)
         );
-        datePickerDialog.show();
+        dialog.show();
     }
-
-    private void updateTimeDisplay() {
-        tvStartTime.setText(CalendarUtils.formatDate(startCalendar.getTime(), "yyyy-MM-dd HH:mm"));
-        tvEndTime.setText(CalendarUtils.formatDate(endCalendar.getTime(), "yyyy-MM-dd HH:mm"));
+    
+    private void showTimePicker(boolean isStartTime) {
+        Calendar time = isStartTime ? startTime : endTime;
+        
+        TimePickerDialog dialog = new TimePickerDialog(
+                this,
+                (view, hourOfDay, minute) -> {
+                    time.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    time.set(Calendar.MINUTE, minute);
+                    
+                    // 如果是开始时间，检查是否晚于结束时间
+                    if (isStartTime && startTime.after(endTime)) {
+                        endTime.setTimeInMillis(startTime.getTimeInMillis());
+                        endTime.add(Calendar.HOUR_OF_DAY, 1);
+                    }
+                    
+                    // 如果是结束时间，检查是否早于开始时间
+                    if (!isStartTime && endTime.before(startTime)) {
+                        Toast.makeText(this, "结束时间不能早于开始时间", Toast.LENGTH_SHORT).show();
+                        endTime.setTimeInMillis(startTime.getTimeInMillis());
+                        endTime.add(Calendar.HOUR_OF_DAY, 1);
+                    }
+                    
+                    updateDateTimeDisplay();
+                },
+                time.get(Calendar.HOUR_OF_DAY),
+                time.get(Calendar.MINUTE),
+                true
+        );
+        dialog.show();
     }
-
+    
+    private void updateDateTimeDisplay() {
+        tvDate.setText(dateFormat.format(eventDate.getTime()));
+        tvStartTime.setText(timeFormat.format(startTime.getTime()));
+        tvEndTime.setText(timeFormat.format(endTime.getTime()));
+    }
+    
     private void saveEvent() {
+        // 验证输入
         String title = etTitle.getText().toString().trim();
         if (title.isEmpty()) {
             Toast.makeText(this, "请输入标题", Toast.LENGTH_SHORT).show();
+            etTitle.requestFocus();
             return;
         }
-
-        if (startCalendar.after(endCalendar)) {
-            Toast.makeText(this, "开始时间不能晚于结束时间", Toast.LENGTH_SHORT).show();
-            return;
+        
+        // 获取事件类型
+        CalendarEvent.EventType eventType = CalendarEvent.EventType.OTHER;
+        int checkedId = chipGroupType.getCheckedChipId();
+        if (checkedId == R.id.chip_meeting) {
+            eventType = CalendarEvent.EventType.MEETING;
+        } else if (checkedId == R.id.chip_work) {
+            eventType = CalendarEvent.EventType.WORK;
+        } else if (checkedId == R.id.chip_personal) {
+            eventType = CalendarEvent.EventType.PERSONAL;
+        } else if (checkedId == R.id.chip_important) {
+            eventType = CalendarEvent.EventType.IMPORTANT;
         }
-
-        CalendarEvent event = isEditMode ? currentEvent : new CalendarEvent();
-        event.setTitle(title);
-        event.setDescription(etDescription.getText().toString().trim());
-        event.setLocation(etLocation.getText().toString().trim());
-        event.setStartTime(startCalendar.getTime());
-        event.setEndTime(endCalendar.getTime());
-        event.setHasReminder(switchReminder.isChecked());
-
-        // 获取提醒时间
-        if (switchReminder.isChecked()) {
-            int position = spinnerReminder.getSelectedItemPosition();
-            int[] minutes = {5, 15, 30, 60, 1440};
-            event.setReminderMinutes(minutes[position]);
-        }
-
-        // 获取优先级
-        int checkedId = rgPriority.getCheckedRadioButtonId();
-        if (checkedId == R.id.rb_low) {
-            event.setPriority(1);
-        } else if (checkedId == R.id.rb_medium) {
-            event.setPriority(2);
+        
+        // 创建或更新事件
+        CalendarEvent event;
+        if (isEditMode && currentEvent != null) {
+            event = currentEvent;
         } else {
-            event.setPriority(3);
+            event = new CalendarEvent(null, title, startTime.getTime(), endTime.getTime());
         }
-
+        
+        event.setTitle(title);
+        event.setStartTime(startTime.getTime());
+        event.setEndTime(endTime.getTime());
+        event.setType(eventType);
+        event.setLocation(etLocation.getText().toString().trim());
+        event.setDescription(etDescription.getText().toString().trim());
+        
         // 保存到数据库
         if (isEditMode) {
-            eventDatabase.updateEvent(event);
+            eventManager.updateEvent(event);
             Toast.makeText(this, "日程已更新", Toast.LENGTH_SHORT).show();
         } else {
-            long id = eventDatabase.addEvent(event);
-            event.setId(id);
+            eventManager.addEvent(event);
             Toast.makeText(this, "日程已添加", Toast.LENGTH_SHORT).show();
         }
-
-        // 设置提醒
-        if (event.isHasReminder()) {
-            EventReminderManager.setReminder(this, event);
-        }
-
+        
+        setResult(RESULT_OK);
         finish();
     }
-
+    
     private void showDeleteConfirmDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("删除日程")
                 .setMessage("确定要删除这个日程吗？")
                 .setPositiveButton("删除", (dialog, which) -> {
-                    eventDatabase.deleteEvent(currentEvent.getId());
-                    EventReminderManager.cancelReminder(this, currentEvent);
-                    Toast.makeText(this, "日程已删除", Toast.LENGTH_SHORT).show();
-                    finish();
+                    if (currentEvent != null) {
+                        eventManager.deleteEvent(currentEvent.getId());
+                        Toast.makeText(this, "日程已删除", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_DELETED);
+                        finish();
+                    }
                 })
                 .setNegativeButton("取消", null)
                 .show();

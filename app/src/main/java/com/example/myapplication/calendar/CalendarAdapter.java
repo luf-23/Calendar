@@ -32,6 +32,7 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.DayVie
     @NonNull
     @Override
     public DayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        //在钩子函数中创建ViewHolder
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_calendar_day, parent, false);
         return new DayViewHolder(view);
@@ -41,7 +42,14 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.DayVie
     public void onBindViewHolder(@NonNull DayViewHolder holder, int position) {
         CalendarDay day = days.get(position);
         
-        holder.tvDayNumber.setText(String.valueOf(day.getDay()));
+        // 如果是年视图（12个项目），显示月份名称
+        if (days.size() == 12) {
+            String[] monthNames = {"1月", "2月", "3月", "4月", "5月", "6月", 
+                                   "7月", "8月", "9月", "10月", "11月", "12月"};
+            holder.tvDayNumber.setText(monthNames[position]);
+        } else {
+            holder.tvDayNumber.setText(String.valueOf(day.getDay()));
+        }
         
         // 设置当前月份的日期样式
         if (day.isCurrentMonth()) {
@@ -67,21 +75,8 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.DayVie
             holder.dayCard.setCardBackgroundColor(Color.parseColor("#2196F3"));
             holder.tvDayNumber.setTextColor(Color.parseColor("#FFFFFF"));
         }
-        
-        // 显示事件指示器
-        if (day.hasEvents()) {
-            holder.eventIndicator.setVisibility(View.VISIBLE);
-            if (day.getEventCount() > 1) {
-                holder.tvEventCount.setVisibility(View.VISIBLE);
-                holder.tvEventCount.setText(String.valueOf(day.getEventCount()));
-            } else {
-                holder.tvEventCount.setVisibility(View.GONE);
-            }
-        } else {
-            holder.eventIndicator.setVisibility(View.GONE);
-            holder.tvEventCount.setVisibility(View.GONE);
-        }
-        
+
+        // 设置点击事件
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onDayClick(day);

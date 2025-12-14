@@ -10,11 +10,9 @@ public class CalendarDay {
     private boolean isCurrentMonth;
     private boolean isToday;
     private boolean isSelected;
-    private List<CalendarEvent> events;
 
     public CalendarDay(Calendar calendar) {
         this.calendar = (Calendar) calendar.clone();
-        this.events = new ArrayList<>();
         this.isCurrentMonth = true;
         this.isToday = false;
         this.isSelected = false;
@@ -64,25 +62,4 @@ public class CalendarDay {
         isSelected = selected;
     }
 
-    public List<CalendarEvent> getEvents() {
-        return events;
-    }
-
-    public void setEvents(List<CalendarEvent> events) {
-        this.events = events;
-    }
-
-    public void addEvent(CalendarEvent event) {
-        if (!events.contains(event)) {
-            events.add(event);
-        }
-    }
-
-    public boolean hasEvents() {
-        return events != null && !events.isEmpty();
-    }
-
-    public int getEventCount() {
-        return events != null ? events.size() : 0;
-    }
 }
