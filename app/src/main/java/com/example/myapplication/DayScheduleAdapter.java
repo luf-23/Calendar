@@ -1,4 +1,4 @@
-package com.example.myapplication.calendar;
+package com.example.myapplication;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;

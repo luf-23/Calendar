@@ -1,4 +1,4 @@
-package com.example.myapplication.calendar;
+package com.example.myapplication;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -74,6 +74,20 @@ public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.DayVie
         if (day.isSelected()) {
             holder.dayCard.setCardBackgroundColor(Color.parseColor("#2196F3"));
             holder.tvDayNumber.setTextColor(Color.parseColor("#FFFFFF"));
+        }
+
+        // 显示事件指示器（绿点）
+        if (day.hasEvents() && days.size() != 12) { // 不在年视图显示
+            holder.eventIndicator.setVisibility(View.VISIBLE);
+            if (day.getEventCount() > 1) {
+                holder.tvEventCount.setText(String.valueOf(day.getEventCount()));
+                holder.tvEventCount.setVisibility(View.VISIBLE);
+            } else {
+                holder.tvEventCount.setVisibility(View.GONE);
+            }
+        } else {
+            holder.eventIndicator.setVisibility(View.GONE);
+            holder.tvEventCount.setVisibility(View.GONE);
         }
 
         // 设置点击事件

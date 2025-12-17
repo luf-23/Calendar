@@ -1,4 +1,4 @@
-package com.example.myapplication.calendar;
+package com.example.myapplication;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -10,12 +10,14 @@ public class CalendarDay {
     private boolean isCurrentMonth;
     private boolean isToday;
     private boolean isSelected;
+    private int eventCount;
 
     public CalendarDay(Calendar calendar) {
         this.calendar = (Calendar) calendar.clone();
         this.isCurrentMonth = true;
         this.isToday = false;
         this.isSelected = false;
+        this.eventCount = 0;
     }
 
     public Date getDate() {
@@ -60,6 +62,18 @@ public class CalendarDay {
 
     public void setSelected(boolean selected) {
         isSelected = selected;
+    }
+
+    public int getEventCount() {
+        return eventCount;
+    }
+
+    public void setEventCount(int eventCount) {
+        this.eventCount = eventCount;
+    }
+
+    public boolean hasEvents() {
+        return eventCount > 0;
     }
 
 }

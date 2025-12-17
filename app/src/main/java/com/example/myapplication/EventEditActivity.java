@@ -1,4 +1,4 @@
-package com.example.myapplication.calendar;
+package com.example.myapplication;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -88,10 +88,10 @@ public class EventEditActivity extends AppCompatActivity {
         endTime = Calendar.getInstance();
         
         // 检查是否是编辑模式
-        String eventId = getIntent().getStringExtra(EXTRA_EVENT_ID);
+        long eventId = getIntent().getLongExtra(EXTRA_EVENT_ID, -1);
         long dateMillis = getIntent().getLongExtra(EXTRA_EVENT_DATE, System.currentTimeMillis());
         
-        if (eventId != null) {
+        if (eventId != -1) {
             // 编辑模式
             isEditMode = true;
             tvTitleBar.setText("编辑日程");
@@ -249,7 +249,7 @@ public class EventEditActivity extends AppCompatActivity {
         if (isEditMode && currentEvent != null) {
             event = currentEvent;
         } else {
-            event = new CalendarEvent(null, title, startTime.getTime(), endTime.getTime());
+            event = new CalendarEvent(title, startTime.getTime(), endTime.getTime());
         }
         
         event.setTitle(title);

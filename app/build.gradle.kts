@@ -39,27 +39,32 @@ dependencies {
     implementation(libs.constraintlayout)
     
     // RecyclerView
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation(libs.recyclerview)
     
     // CardView
-    implementation("androidx.cardview:cardview:1.0.0")
+    implementation(libs.cardview)
     
     // WorkManager for background tasks
-    implementation("androidx.work:work-runtime:2.9.0")
+    implementation(libs.work.runtime)
     
     // ViewPager2 for swipe views
-    implementation("androidx.viewpager2:viewpager2:1.0.0")
+    implementation(libs.viewpager2)
     
     // Gson for JSON parsing
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.gson)
     
     // OkHttp for network requests
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation(libs.okhttp)
     
     // Lifecycle components
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.lifecycle.livedata.ktx)
+    
+    // Room database
+    implementation(libs.room.runtime)
+    implementation(libs.room.common.jvm)
+    annotationProcessor(libs.room.compiler)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

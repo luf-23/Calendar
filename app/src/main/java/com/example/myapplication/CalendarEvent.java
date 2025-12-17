@@ -1,18 +1,42 @@
-package com.example.myapplication.calendar;
+package com.example.myapplication;
+
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
+import androidx.annotation.NonNull;
 
 import java.util.Date;
 
 /**
  * 日程事件模型类
  */
+@Entity(tableName = "calendar_events")
+@TypeConverters({DateConverter.class, EventTypeConverter.class})
 public class CalendarEvent {
-    private String id;
+    @PrimaryKey(autoGenerate = true)
+    @NonNull
+    private long id;
+    
+    @ColumnInfo(name = "title")
     private String title;
+    
+    @ColumnInfo(name = "description")
     private String description;
+    
+    @ColumnInfo(name = "start_time")
     private Date startTime;
+    
+    @ColumnInfo(name = "end_time")
     private Date endTime;
+    
+    @ColumnInfo(name = "location")
     private String location;
+    
+    @ColumnInfo(name = "color")
     private int color;
+    
+    @ColumnInfo(name = "type")
     private EventType type;
     
     public enum EventType {
@@ -39,8 +63,15 @@ public class CalendarEvent {
         }
     }
     
-    public CalendarEvent(String id, String title, Date startTime, Date endTime) {
-        this.id = id;
+    // 无参构造函数（Room 需要）
+    public CalendarEvent() {
+        this.type = EventType.OTHER;
+        this.color = android.graphics.Color.parseColor(EventType.OTHER.getColor());
+    }
+    
+    // 便捷构造函数（使用 @Ignore 避免 Room 警告）
+    @androidx.room.Ignore
+    public CalendarEvent(String title, Date startTime, Date endTime) {
         this.title = title;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -48,11 +79,11 @@ public class CalendarEvent {
         this.color = android.graphics.Color.parseColor(EventType.OTHER.getColor());
     }
     
-    public String getId() {
+    public long getId() {
         return id;
     }
     
-    public void setId(String id) {
+    public void setId(long id) {
         this.id = id;
     }
     
