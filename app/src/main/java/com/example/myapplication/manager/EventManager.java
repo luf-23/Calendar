@@ -1,6 +1,11 @@
-package com.example.myapplication;
+package com.example.myapplication.manager;
 
 import android.content.Context;
+
+import com.example.myapplication.data.model.CalendarEvent;
+import com.example.myapplication.data.model.CalendarDay;
+import com.example.myapplication.data.database.AppDatabase;
+import com.example.myapplication.data.database.EventDao;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -26,12 +31,6 @@ public class EventManager {
     public CalendarEvent addEvent(CalendarEvent event) {
         long id = eventDao.insert(event);
         event.setId(id);
-        
-        // 调试输出
-        android.util.Log.d("EventManager", "添加日程: " + event.getTitle());
-        android.util.Log.d("EventManager", "开始时间: " + event.getStartTime());
-        android.util.Log.d("EventManager", "日程ID: " + id);
-        
         return event;
     }
     
@@ -43,7 +42,6 @@ public class EventManager {
             eventDao.update(event);
             return true;
         } catch (Exception e) {
-            android.util.Log.e("EventManager", "更新日程失败", e);
             return false;
         }
     }
@@ -56,7 +54,6 @@ public class EventManager {
             eventDao.deleteById(eventId);
             return true;
         } catch (Exception e) {
-            android.util.Log.e("EventManager", "删除日程失败", e);
             return false;
         }
     }
@@ -83,7 +80,6 @@ public class EventManager {
             long id = Long.parseLong(eventId);
             return getEvent(id);
         } catch (NumberFormatException e) {
-            android.util.Log.e("EventManager", "无效的事件ID: " + eventId);
             return null;
         }
     }
@@ -114,13 +110,7 @@ public class EventManager {
         calendar.set(Calendar.MILLISECOND, 999);
         long endOfDay = calendar.getTimeInMillis();
         
-        android.util.Log.d("EventManager", "查询日期: " + date);
-        android.util.Log.d("EventManager", "时间范围: " + startOfDay + " - " + endOfDay);
-        
-        List<CalendarEvent> events = eventDao.getEventsByDate(startOfDay, endOfDay);
-        
-        android.util.Log.d("EventManager", "匹配的事件数: " + events.size());
-        return events;
+        return eventDao.getEventsByDate(startOfDay, endOfDay);
     }
     
     /**
@@ -152,12 +142,7 @@ public class EventManager {
         return eventDao.getEventCount();
     }
     
-    /**
-     * 清空所有日程（仅用于测试）
-     */
-    public void clearAllEvents() {
-        eventDao.deleteAll();
-    }
+
     
     /**
      * 加载日历天数的事件数量

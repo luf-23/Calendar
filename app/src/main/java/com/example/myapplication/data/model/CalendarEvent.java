@@ -1,10 +1,13 @@
-package com.example.myapplication;
+package com.example.myapplication.data.model;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 import androidx.annotation.NonNull;
+
+import com.example.myapplication.data.database.DateConverter;
+import com.example.myapplication.data.database.EventTypeConverter;
 
 import java.util.Date;
 
@@ -39,6 +42,19 @@ public class CalendarEvent {
     @ColumnInfo(name = "type")
     private EventType type;
     
+    // 提醒相关字段
+    @ColumnInfo(name = "reminder_enabled")
+    private boolean reminderEnabled;
+    
+    @ColumnInfo(name = "reminder_minutes_before")
+    private int reminderMinutesBefore;  // 提前多少分钟提醒
+    
+    @ColumnInfo(name = "sound_enabled")
+    private boolean soundEnabled;  // 是否开启响铃
+    
+    @ColumnInfo(name = "alarm_request_code")
+    private int alarmRequestCode;  // AlarmManager的请求码
+    
     public enum EventType {
         MEETING("会议", "#2196F3"),
         WORK("工作", "#4CAF50"),
@@ -63,10 +79,55 @@ public class CalendarEvent {
         }
     }
     
+    // 提醒时间枚举
+    public enum ReminderTime {
+        AT_TIME(0, "日程发生时"),
+        MINUTES_15(15, "提前15分钟"),
+        MINUTES_30(30, "提前30分钟"),
+        HOUR_1(60, "提前1小时"),
+        HOURS_2(120, "提前2小时"),
+        HOURS_3(180, "提前3小时"),
+        HOURS_6(360, "提前6小时"),
+        HOURS_12(720, "提前12小时"),
+        DAY_1(1440, "提前1天"),
+        DAYS_2(2880, "提前2天"),
+        DAYS_3(4320, "提前3天"),
+        WEEK_1(10080, "提前7天");
+        
+        private int minutes;
+        private String displayName;
+        
+        ReminderTime(int minutes, String displayName) {
+            this.minutes = minutes;
+            this.displayName = displayName;
+        }
+        
+        public int getMinutes() {
+            return minutes;
+        }
+        
+        public String getDisplayName() {
+            return displayName;
+        }
+        
+        public static ReminderTime fromMinutes(int minutes) {
+            for (ReminderTime time : values()) {
+                if (time.minutes == minutes) {
+                    return time;
+                }
+            }
+            return AT_TIME;
+        }
+    }
+    
     // 无参构造函数（Room 需要）
     public CalendarEvent() {
         this.type = EventType.OTHER;
         this.color = android.graphics.Color.parseColor(EventType.OTHER.getColor());
+        this.reminderEnabled = false;
+        this.reminderMinutesBefore = 0;
+        this.soundEnabled = false;
+        this.alarmRequestCode = (int) System.currentTimeMillis();
     }
     
     // 便捷构造函数（使用 @Ignore 避免 Room 警告）
@@ -77,6 +138,10 @@ public class CalendarEvent {
         this.endTime = endTime;
         this.type = EventType.OTHER;
         this.color = android.graphics.Color.parseColor(EventType.OTHER.getColor());
+        this.reminderEnabled = false;
+        this.reminderMinutesBefore = 0;
+        this.soundEnabled = false;
+        this.alarmRequestCode = (int) System.currentTimeMillis();
     }
     
     public long getId() {
@@ -142,6 +207,49 @@ public class CalendarEvent {
     public void setType(EventType type) {
         this.type = type;
         this.color = android.graphics.Color.parseColor(type.getColor());
+    }
+    
+    public boolean isReminderEnabled() {
+        return reminderEnabled;
+    }
+    
+    public void setReminderEnabled(boolean reminderEnabled) {
+        this.reminderEnabled = reminderEnabled;
+    }
+    
+    public int getReminderMinutesBefore() {
+        return reminderMinutesBefore;
+    }
+    
+    public void setReminderMinutesBefore(int reminderMinutesBefore) {
+        this.reminderMinutesBefore = reminderMinutesBefore;
+    }
+    
+    public boolean isSoundEnabled() {
+        return soundEnabled;
+    }
+    
+    public void setSoundEnabled(boolean soundEnabled) {
+        this.soundEnabled = soundEnabled;
+    }
+    
+    public int getAlarmRequestCode() {
+        return alarmRequestCode;
+    }
+    
+    public void setAlarmRequestCode(int alarmRequestCode) {
+        this.alarmRequestCode = alarmRequestCode;
+    }
+    
+    /**
+     * 计算提醒时间
+     */
+    public Date getReminderTime() {
+        if (startTime != null && reminderEnabled) {
+            long reminderTimeMillis = startTime.getTime() - (reminderMinutesBefore * 60 * 1000L);
+            return new Date(reminderTimeMillis);
+        }
+        return null;
     }
     
     /**

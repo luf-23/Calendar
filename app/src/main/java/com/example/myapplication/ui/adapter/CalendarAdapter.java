@@ -1,4 +1,4 @@
-package com.example.myapplication;
+package com.example.myapplication.ui.adapter;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -11,6 +11,8 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.data.model.CalendarDay;
+import com.example.myapplication.data.model.CalendarEvent;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.List;

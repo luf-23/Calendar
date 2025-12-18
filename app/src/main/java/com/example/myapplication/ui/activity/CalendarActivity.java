@@ -1,4 +1,4 @@
-package com.example.myapplication;
+package com.example.myapplication.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,6 +13,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.ui.adapter.CalendarAdapter;
+import com.example.myapplication.ui.adapter.DayScheduleAdapter;
+import com.example.myapplication.data.model.CalendarDay;
+import com.example.myapplication.data.model.CalendarEvent;
+import com.example.myapplication.manager.EventManager;
+import com.example.myapplication.util.CalendarUtils;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 

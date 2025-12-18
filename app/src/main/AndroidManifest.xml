@@ -7,6 +7,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:allowBackup="true"
@@ -21,7 +24,7 @@
         
         <!-- 日历主Activity -->
         <activity
-            android:name=".CalendarActivity"
+            android:name=".ui.activity.CalendarActivity"
             android:exported="true"
             android:label="@string/app_name">
             <intent-filter>
@@ -32,9 +35,35 @@
 
         <!-- 日程编辑Activity -->
         <activity
-            android:name=".EventEditActivity"
+            android:name=".ui.activity.EventEditActivity"
             android:exported="false"
             android:label="编辑日程" />
+
+        <!-- 响铃Activity -->
+        <activity
+            android:name=".ui.activity.AlarmActivity"
+            android:exported="false"
+            android:label="日程提醒"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.MyApplication" />
+
+        <!-- 提醒广播接收器 -->
+        <receiver
+            android:name=".receiver.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- 开机广播接收器 -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

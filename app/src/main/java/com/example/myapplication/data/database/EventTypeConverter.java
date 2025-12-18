@@ -1,6 +1,8 @@
-package com.example.myapplication;
+package com.example.myapplication.data.database;
 
 import androidx.room.TypeConverter;
+
+import com.example.myapplication.data.model.CalendarEvent;
 
 /**
  * EventType 枚举类型转换器，用于 Room 数据库

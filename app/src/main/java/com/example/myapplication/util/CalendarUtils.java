@@ -1,4 +1,6 @@
-package com.example.myapplication;
+package com.example.myapplication.util;
+
+import com.example.myapplication.data.model.CalendarDay;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

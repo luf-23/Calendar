@@ -1,8 +1,12 @@
-package com.example.myapplication;
+package com.example.myapplication.ui.activity;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -12,8 +16,14 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.myapplication.R;
+import com.example.myapplication.data.model.CalendarEvent;
+import com.example.myapplication.manager.EventManager;
+import com.example.myapplication.util.ReminderScheduler;
+import com.example.myapplication.util.BatteryOptimizationHelper;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -27,6 +37,9 @@ import java.util.Locale;
  */
 public class EventEditActivity extends AppCompatActivity {
     
+    private static final String TAG = "EventEditActivity";
+    private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
+    
     public static final String EXTRA_EVENT_ID = "event_id";
     public static final String EXTRA_EVENT_DATE = "event_date";
     public static final int RESULT_DELETED = 2;
@@ -38,7 +51,15 @@ public class EventEditActivity extends AppCompatActivity {
     private Button btnDelete;
     private ImageButton btnCancel, btnSave;
     
+    // 提醒相关控件
+    private com.google.android.material.switchmaterial.SwitchMaterial switchReminder;
+    private com.google.android.material.switchmaterial.SwitchMaterial switchSound;
+    private android.widget.Spinner spinnerReminder;
+    private com.google.android.material.card.MaterialCardView cardReminderTime;
+    private com.google.android.material.card.MaterialCardView cardSound;
+    
     private EventManager eventManager;
+    private ReminderScheduler reminderScheduler;
     private CalendarEvent currentEvent;
     private boolean isEditMode = false;
     
@@ -54,9 +75,43 @@ public class EventEditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_edit);
         
+        // 请求通知权限（Android 13+）
+        requestNotificationPermission();
+        
         initViews();
         initData();
         setupListeners();
+    }
+    
+    /**
+     * 请求通知权限
+     */
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        REQUEST_NOTIFICATION_PERMISSION);
+            }
+        }
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "通知权限已授予", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "没有通知权限，将无法显示提醒", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
     
     private void initViews() {
@@ -77,10 +132,24 @@ public class EventEditActivity extends AppCompatActivity {
         btnDelete = findViewById(R.id.btn_delete);
         btnCancel = findViewById(R.id.btn_cancel);
         btnSave = findViewById(R.id.btn_save);
+        
+        // 提醒相关控件
+        switchReminder = findViewById(R.id.switch_reminder);
+        switchSound = findViewById(R.id.switch_sound);
+        spinnerReminder = findViewById(R.id.spinner_reminder);
+        cardReminderTime = findViewById(R.id.card_reminder_time);
+        cardSound = findViewById(R.id.card_sound);
+        
+        // 设置提醒时间选项
+        android.widget.ArrayAdapter<CharSequence> adapter = android.widget.ArrayAdapter.createFromResource(
+                this, R.array.reminder_times, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerReminder.setAdapter(adapter);
     }
     
     private void initData() {
         eventManager = new EventManager(this);
+        reminderScheduler = new ReminderScheduler(this);
         
         // 初始化时间
         eventDate = Calendar.getInstance();
@@ -151,7 +220,32 @@ public class EventEditActivity extends AppCompatActivity {
                 break;
         }
         
+        // 加载提醒设置
+        switchReminder.setChecked(currentEvent.isReminderEnabled());
+        if (currentEvent.isReminderEnabled()) {
+            cardReminderTime.setVisibility(View.VISIBLE);
+            cardSound.setVisibility(View.VISIBLE);
+            
+            // 设置提醒时间选项
+            CalendarEvent.ReminderTime reminderTime = 
+                    CalendarEvent.ReminderTime.fromMinutes(currentEvent.getReminderMinutesBefore());
+            spinnerReminder.setSelection(getReminderTimePosition(reminderTime));
+            
+            // 设置响铃开关
+            switchSound.setChecked(currentEvent.isSoundEnabled());
+        }
+        
         updateDateTimeDisplay();
+    }
+    
+    private int getReminderTimePosition(CalendarEvent.ReminderTime reminderTime) {
+        CalendarEvent.ReminderTime[] times = CalendarEvent.ReminderTime.values();
+        for (int i = 0; i < times.length; i++) {
+            if (times[i] == reminderTime) {
+                return i;
+            }
+        }
+        return 0;
     }
     
     private void setupListeners() {
@@ -166,6 +260,17 @@ public class EventEditActivity extends AppCompatActivity {
         layoutStartTime.setOnClickListener(v -> showTimePicker(true));
         
         layoutEndTime.setOnClickListener(v -> showTimePicker(false));
+        
+        // 提醒开关监听
+        switchReminder.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                cardReminderTime.setVisibility(View.VISIBLE);
+                cardSound.setVisibility(View.VISIBLE);
+            } else {
+                cardReminderTime.setVisibility(View.GONE);
+                cardSound.setVisibility(View.GONE);
+            }
+        });
     }
     
     private void showDatePicker() {
@@ -259,6 +364,29 @@ public class EventEditActivity extends AppCompatActivity {
         event.setLocation(etLocation.getText().toString().trim());
         event.setDescription(etDescription.getText().toString().trim());
         
+        // 设置提醒
+        boolean reminderEnabled = switchReminder.isChecked();
+        event.setReminderEnabled(reminderEnabled);
+        
+        if (reminderEnabled) {
+            // 验证提醒时间必须选择
+            int selectedPosition = spinnerReminder.getSelectedItemPosition();
+            CalendarEvent.ReminderTime[] reminderTimes = CalendarEvent.ReminderTime.values();
+            if (selectedPosition >= 0 && selectedPosition < reminderTimes.length) {
+                CalendarEvent.ReminderTime reminderTime = reminderTimes[selectedPosition];
+                event.setReminderMinutesBefore(reminderTime.getMinutes());
+            }
+            
+            // 设置响铃
+            boolean soundEnabled = switchSound.isChecked();
+            event.setSoundEnabled(soundEnabled);
+        }
+        
+        // 取消旧的提醒（如果是编辑模式）
+        if (isEditMode && currentEvent != null) {
+            reminderScheduler.cancelReminder(currentEvent);
+        }
+        
         // 保存到数据库
         if (isEditMode) {
             eventManager.updateEvent(event);
@@ -266,6 +394,23 @@ public class EventEditActivity extends AppCompatActivity {
         } else {
             eventManager.addEvent(event);
             Toast.makeText(this, "日程已添加", Toast.LENGTH_SHORT).show();
+        }
+        
+        // 设置新的提醒
+        if (reminderEnabled) {
+            // 检查提醒时间是否已过
+            if (event.getReminderTime() != null && 
+                event.getReminderTime().getTime() < System.currentTimeMillis()) {
+                Toast.makeText(this, "提醒时间已过，无法设置提醒", Toast.LENGTH_LONG).show();
+            } else {
+                // 检查精确闹钟权限
+                if (!reminderScheduler.canScheduleExactAlarms()) {
+                    Toast.makeText(this, "日程已保存，但需要精确闹钟权限才能设置提醒", Toast.LENGTH_LONG).show();
+                } else {
+                    reminderScheduler.scheduleReminder(event);
+                    Toast.makeText(this, "日程和提醒已设置", Toast.LENGTH_SHORT).show();
+                }
+            }
         }
         
         setResult(RESULT_OK);
@@ -278,6 +423,10 @@ public class EventEditActivity extends AppCompatActivity {
                 .setMessage("确定要删除这个日程吗？")
                 .setPositiveButton("删除", (dialog, which) -> {
                     if (currentEvent != null) {
+                        // 取消提醒
+                        if (currentEvent.isReminderEnabled()) {
+                            reminderScheduler.cancelReminder(currentEvent);
+                        }
                         eventManager.deleteEvent(currentEvent.getId());
                         Toast.makeText(this, "日程已删除", Toast.LENGTH_SHORT).show();
                         setResult(RESULT_DELETED);

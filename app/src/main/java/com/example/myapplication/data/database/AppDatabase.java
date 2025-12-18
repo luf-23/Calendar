@@ -1,4 +1,4 @@
-package com.example.myapplication;
+package com.example.myapplication.data.database;
 
 import android.content.Context;
 
@@ -7,19 +7,16 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
-/**
- * 应用数据库
- */
-@Database(entities = {CalendarEvent.class}, version = 1, exportSchema = false)
+import com.example.myapplication.data.model.CalendarEvent;
+
+@Database(entities = {CalendarEvent.class}, version = 2, exportSchema = false)
 @TypeConverters({DateConverter.class, EventTypeConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
     
     private static final String DATABASE_NAME = "calendar_database";
     private static volatile AppDatabase INSTANCE;
     
-    /**
-     * 获取数据库单例
-     */
+
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
@@ -29,17 +26,14 @@ public abstract class AppDatabase extends RoomDatabase {
                             AppDatabase.class,
                             DATABASE_NAME
                     )
-                    .allowMainThreadQueries() // 注意：生产环境应该在后台线程操作
-                    .fallbackToDestructiveMigration() // 数据库升级时清空数据（开发阶段）
+                    .allowMainThreadQueries()
+                    .fallbackToDestructiveMigration()
                     .build();
                 }
             }
         }
         return INSTANCE;
     }
-    
-    /**
-     * 获取事件 DAO
-     */
+
     public abstract EventDao eventDao();
 }

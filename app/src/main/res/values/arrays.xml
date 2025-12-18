@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 提醒时间选项 -->
+    <string-array name="reminder_times">
+        <item>日程发生时</item>
+        <item>提前15分钟</item>
+        <item>提前30分钟</item>
+        <item>提前1小时</item>
+        <item>提前2小时</item>
+        <item>提前3小时</item>
+        <item>提前6小时</item>
+        <item>提前12小时</item>
+        <item>提前1天</item>
+        <item>提前2天</item>
+        <item>提前3天</item>
+        <item>提前7天</item>
+    </string-array>
+</resources>
