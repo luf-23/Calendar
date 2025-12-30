@@ -28,13 +28,10 @@ public class IcsExportImportHelper {
     private static final String ICAL_VERSION = "2.0";
     private static final String PRODUCT_ID = "-//MyCalendar//Calendar Events//CN";
     
-    // iCalendar 日期时间格式：yyyyMMdd'T'HHmmss'Z'
+    // iCalendar 日期时间格式：使用本地时间格式，避免时区转换问题
+    // 格式：yyyyMMdd'T'HHmmss (不带 Z，表示本地时间)
     private static final SimpleDateFormat ICS_DATE_FORMAT = 
-        new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.US);
-    
-    static {
-        ICS_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-    }
+        new SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.US);
     
     /**
      * 导出事件列表到 ICS 文件
@@ -312,14 +309,13 @@ public class IcsExportImportHelper {
      */
     private static Date parseIcsDate(String dateStr) {
         try {
-            // 移除可能的时区标识符
+            // 移除可能的时区标识符 (Z 表示 UTC，本来就应该被移除因为我们现在使用本地时间)
             dateStr = dateStr.replace("Z", "");
             dateStr = dateStr.replace("z", "");
             
-            // 尝试标准格式：yyyyMMddTHHmmss
+            // 尝试标准格式：yyyyMMddTHHmmss (本地时间格式)
             if (dateStr.contains("T")) {
-                SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.US);
-                return format.parse(dateStr);
+                return ICS_DATE_FORMAT.parse(dateStr);
             } else {
                 // 全天事件格式：yyyyMMdd
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.US);

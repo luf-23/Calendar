@@ -38,6 +38,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public class CalendarActivity extends AppCompatActivity {
 
@@ -520,9 +521,9 @@ public class CalendarActivity extends AppCompatActivity {
      * 开始导出
      */
     private void startExport() {
-        // 生成文件名：日历导出_年月日_时分秒.ics
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
-        String fileName = "日历导出_" + sdf.format(new Date()) + ".ics";
+        // 生成文件名：日程-uuid(8-12位).ics
+        String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String fileName = "日程-" + uuid + ".ics";
         
         exportFileLauncher.launch(fileName);
     }
