@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="导入/导出日历事件"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#212121"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="您可以将所有日历事件导出为 iCalendar (.ics) 文件，也可以从 .ics 文件导入事件。"
+        android:textSize="14sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="24dp" />
+
+    <!-- 导出按钮 -->
+    <Button
+        android:id="@+id/btn_export"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="导出所有事件"
+        android:textSize="16sp"
+        android:paddingVertical="12dp"
+        android:drawableStart="@android:drawable/ic_menu_save"
+        android:drawablePadding="8dp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="将所有日历事件导出为 .ics 文件"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="16dp"
+        android:paddingStart="8dp" />
+
+    <!-- 导入按钮 -->
+    <Button
+        android:id="@+id/btn_import"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="从文件导入"
+        android:textSize="16sp"
+        android:paddingVertical="12dp"
+        android:drawableStart="@android:drawable/ic_menu_upload"
+        android:drawablePadding="8dp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="从 .ics 文件导入日历事件"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="16dp"
+        android:paddingStart="8dp" />
+
+    <!-- 取消按钮 -->
+    <Button
+        android:id="@+id/btn_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="取消"
+        android:textSize="16sp"
+        android:paddingVertical="12dp"
+        style="?android:attr/buttonBarButtonStyle" />
+
+</LinearLayout>

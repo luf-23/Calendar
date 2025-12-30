@@ -1,13 +1,23 @@
 package com.example.myapplication.ui.activity;
 
+import android.app.Activity;
+import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,16 +39,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * 日历主Activity
- * 这是一个纯粹的日历应用，提供年/月/日视图切换和日程管理功能
- */
 public class CalendarActivity extends AppCompatActivity {
 
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
     private TextView tvMonthYear;
-    private ImageButton btnPrevMonth, btnNextMonth, btnToday;
+    private ImageButton btnPrevMonth, btnNextMonth, btnMoreOptions;
     private MaterialButtonToggleGroup toggleViewMode;
     private GridLayout weekdayHeader;
     
@@ -57,6 +63,10 @@ public class CalendarActivity extends AppCompatActivity {
     private static final int REQUEST_ADD_EVENT = 1001;
     private static final int REQUEST_EDIT_EVENT = 1002;
     
+    // 文件选择器
+    private ActivityResultLauncher<String> exportFileLauncher;
+    private ActivityResultLauncher<String[]> importFileLauncher;
+    
     private Calendar currentCalendar;
     private List<CalendarDay> calendarDays;
     private CalendarDay selectedDay;
@@ -72,9 +82,35 @@ public class CalendarActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calendar);
 
+        initFileLaunchers();
         initViews();
         initCalendar();
         setupListeners();
+    }
+    
+    /**
+     * 初始化文件选择器
+     */
+    private void initFileLaunchers() {
+        // 导出文件选择器
+        exportFileLauncher = registerForActivityResult(
+            new ActivityResultContracts.CreateDocument("text/calendar"),
+            uri -> {
+                if (uri != null) {
+                    performExport(uri);
+                }
+            }
+        );
+        
+        // 导入文件选择器
+        importFileLauncher = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(),
+            uri -> {
+                if (uri != null) {
+                    performImport(uri);
+                }
+            }
+        );
     }
 
     private void initViews() {
@@ -82,7 +118,7 @@ public class CalendarActivity extends AppCompatActivity {
         tvMonthYear = findViewById(R.id.tv_month_year);
         btnPrevMonth = findViewById(R.id.btn_prev_month);
         btnNextMonth = findViewById(R.id.btn_next_month);
-        btnToday = findViewById(R.id.btn_today);
+        btnMoreOptions = findViewById(R.id.btn_more_options);
         toggleViewMode = findViewById(R.id.toggle_view_mode);
         weekdayHeader = findViewById(R.id.weekday_header);
         
@@ -132,7 +168,7 @@ public class CalendarActivity extends AppCompatActivity {
     private void setupListeners() {
         btnPrevMonth.setOnClickListener(v -> navigatePrevious());
         btnNextMonth.setOnClickListener(v -> navigateNext());
-        btnToday.setOnClickListener(v -> goToToday());
+        btnMoreOptions.setOnClickListener(this::showOverflowMenu);
         
         toggleViewMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (isChecked) {
@@ -153,6 +189,56 @@ public class CalendarActivity extends AppCompatActivity {
             }
             startActivityForResult(intent, REQUEST_ADD_EVENT);
         });
+    }
+
+    private void showOverflowMenu(View anchor) {
+        PopupMenu popupMenu = new PopupMenu(this, anchor);
+        popupMenu.getMenuInflater().inflate(R.menu.menu_calendar_overflow, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_jump_to_date) {
+                showDatePickerDialog();
+                return true;
+            } else if (itemId == R.id.action_import_export) {
+                showImportExportDialog();
+                return true;
+            } else if (itemId == R.id.action_settings) {
+                // 设置入口占位，无需处理点击
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
+    }
+
+    private void showDatePickerDialog() {
+        Calendar defaultDate = currentCalendar != null ? currentCalendar : Calendar.getInstance();
+        DatePickerDialog dialog = new DatePickerDialog(
+            this,
+            (view, year, month, dayOfMonth) -> {
+                Calendar selectedDate = Calendar.getInstance();
+                selectedDate.set(year, month, dayOfMonth, 0, 0, 0);
+                selectedDate.set(Calendar.MILLISECOND, 0);
+
+                currentCalendar = (Calendar) selectedDate.clone();
+                if (currentViewMode == ViewMode.MONTH) {
+                    updateCalendar();
+                } else {
+                    toggleViewMode.check(R.id.btn_month_view);
+                }
+
+                for (CalendarDay day : calendarDays) {
+                    if (CalendarUtils.isSameDay(day.getCalendar(), selectedDate)) {
+                        onDaySelected(day);
+                        break;
+                    }
+                }
+            },
+            defaultDate.get(Calendar.YEAR),
+            defaultDate.get(Calendar.MONTH),
+            defaultDate.get(Calendar.DAY_OF_MONTH)
+        );
+        dialog.show();
     }
 
     private void updateCalendar() {
@@ -384,5 +470,119 @@ public class CalendarActivity extends AppCompatActivity {
                 updateDaySchedule();
             }
         }
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_calendar, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_import_export) {
+            showImportExportDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    
+    /**
+     * 显示导入导出对话框
+     */
+    private void showImportExportDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_import_export, null);
+        
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create();
+        
+        android.widget.Button btnExport = dialogView.findViewById(R.id.btn_export);
+        android.widget.Button btnImport = dialogView.findViewById(R.id.btn_import);
+        android.widget.Button btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        
+        btnExport.setOnClickListener(v -> {
+            dialog.dismiss();
+            startExport();
+        });
+        
+        btnImport.setOnClickListener(v -> {
+            dialog.dismiss();
+            startImport();
+        });
+        
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
+    }
+    
+    /**
+     * 开始导出
+     */
+    private void startExport() {
+        // 生成文件名：日历导出_年月日_时分秒.ics
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+        String fileName = "日历导出_" + sdf.format(new Date()) + ".ics";
+        
+        exportFileLauncher.launch(fileName);
+    }
+    
+    /**
+     * 执行导出
+     */
+    private void performExport(Uri uri) {
+        Toast.makeText(this, "正在导出...", Toast.LENGTH_SHORT).show();
+        
+        eventManager.exportEventsToIcs(uri, (success, eventCount) -> {
+            runOnUiThread(() -> {
+                if (success) {
+                    Toast.makeText(this, 
+                        String.format("成功导出 %d 个事件", eventCount), 
+                        Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "导出失败", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+    
+    /**
+     * 开始导入
+     */
+    private void startImport() {
+        importFileLauncher.launch(new String[]{"text/calendar", "text/*", "*/*"});
+    }
+    
+    /**
+     * 执行导入
+     */
+    private void performImport(Uri uri) {
+        // 显示确认对话框
+        new AlertDialog.Builder(this)
+            .setTitle("确认导入")
+            .setMessage("导入的事件将添加到现有日历中。是否继续？")
+            .setPositiveButton("导入", (dialog, which) -> {
+                Toast.makeText(this, "正在导入...", Toast.LENGTH_SHORT).show();
+                
+                eventManager.importEventsFromIcs(uri, (success, eventCount) -> {
+                    runOnUiThread(() -> {
+                        if (success) {
+                            Toast.makeText(this, 
+                                String.format("成功导入 %d 个事件", eventCount), 
+                                Toast.LENGTH_LONG).show();
+                            
+                            // 刷新日历
+                            updateCalendar();
+                            if (currentViewMode == ViewMode.DAY) {
+                                updateDaySchedule();
+                            }
+                        } else {
+                            Toast.makeText(this, "导入失败或文件中没有有效事件", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                });
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
 }

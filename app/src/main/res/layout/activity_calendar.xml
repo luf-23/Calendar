@@ -39,12 +39,12 @@
                     android:gravity="center" />
 
                 <ImageButton
-                    android:id="@+id/btn_today"
+                    android:id="@+id/btn_more_options"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_today"
-                    android:contentDescription="今天" />
+                    android:src="@android:drawable/ic_menu_more"
+                    android:contentDescription="更多操作" />
             </LinearLayout>
 
             <!-- 月份导航 -->

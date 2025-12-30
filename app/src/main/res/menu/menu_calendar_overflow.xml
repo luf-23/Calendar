@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_jump_to_date"
+        android:title="跳转到指定日期"
+        android:icon="@android:drawable/ic_menu_my_calendar"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_import_export"
+        android:title="导入/导出"
+        android:icon="@android:drawable/ic_menu_save"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="设置"
+        android:icon="@android:drawable/ic_menu_preferences"
+        app:showAsAction="never" />
+
+</menu>

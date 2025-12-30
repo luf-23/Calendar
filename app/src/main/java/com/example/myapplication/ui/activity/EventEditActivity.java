@@ -39,7 +39,6 @@ public class EventEditActivity extends AppCompatActivity {
     
     private static final String TAG = "EventEditActivity";
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
-    
     public static final String EXTRA_EVENT_ID = "event_id";
     public static final String EXTRA_EVENT_DATE = "event_date";
     public static final int RESULT_DELETED = 2;
