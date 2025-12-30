@@ -212,7 +212,7 @@ public class CalendarActivity extends AppCompatActivity {
     }
 
     private void showDatePickerDialog() {
-        Calendar defaultDate = currentCalendar != null ? currentCalendar : Calendar.getInstance();
+        Calendar defaultDate = Calendar.getInstance();
         DatePickerDialog dialog = new DatePickerDialog(
             this,
             (view, year, month, dayOfMonth) -> {

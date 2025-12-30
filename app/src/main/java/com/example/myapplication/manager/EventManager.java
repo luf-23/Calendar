@@ -173,7 +173,7 @@ public class EventManager {
     }
     
     /**
-     * 从 ICS 文件导入事件
+     * 从 ICS 文件导入事件（支持自动去重）
      * 
      * @param uri 源文件 Uri
      * @param callback 回调接口
@@ -188,11 +188,22 @@ public class EventManager {
                     return;
                 }
                 
-                // 批量插入事件
+                // 获取已有的所有事件用于去重
+                List<CalendarEvent> existingEvents = getAllEvents();
+                
+                // 批量插入事件（自动去重）
                 int successCount = 0;
+                int duplicateCount = 0;
                 for (CalendarEvent event : events) {
                     try {
+                        // 检查是否为重复事件
+                        if (isDuplicateEvent(event, existingEvents)) {
+                            duplicateCount++;
+                            continue;
+                        }
+                        
                         addEvent(event);
+                        existingEvents.add(event); // 添加到已有列表，用于后续重复事件检测
                         successCount++;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -206,6 +217,63 @@ public class EventManager {
                 callback.onImportComplete(false, 0);
             }
         }).start();
+    }
+    
+    /**
+     * 检查是否为重复事件
+     * 判断标准：标题相同、开始时间相同、结束时间相同的事件视为重复
+     * 
+     * @param newEvent 新事件
+     * @param existingEvents 已有的事件列表
+     * @return true 表示为重复事件，false 表示为新事件
+     */
+    private boolean isDuplicateEvent(CalendarEvent newEvent, List<CalendarEvent> existingEvents) {
+        for (CalendarEvent existingEvent : existingEvents) {
+            if (isSameEvent(newEvent, existingEvent)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * 比较两个事件是否相同
+     * 
+     * @param event1 事件1
+     * @param event2 事件2
+     * @return true 表示两个事件相同
+     */
+    private boolean isSameEvent(CalendarEvent event1, CalendarEvent event2) {
+        // 检查标题
+        if (!nullSafeEquals(event1.getTitle(), event2.getTitle())) {
+            return false;
+        }
+        
+        // 检查开始时间
+        if (!nullSafeEquals(event1.getStartTime(), event2.getStartTime())) {
+            return false;
+        }
+        
+        // 检查结束时间
+        if (!nullSafeEquals(event1.getEndTime(), event2.getEndTime())) {
+            return false;
+        }
+        
+        // 所有关键字段都相同，则判定为相同事件
+        return true;
+    }
+    
+    /**
+     * null 安全的相等性判断
+     */
+    private boolean nullSafeEquals(Object obj1, Object obj2) {
+        if (obj1 == null && obj2 == null) {
+            return true;
+        }
+        if (obj1 == null || obj2 == null) {
+            return false;
+        }
+        return obj1.equals(obj2);
     }
     
     /**
